@@ -7,7 +7,6 @@
   <style>
     :root{
       --bg:#0b0f17;
-      --card:#0f1624;
       --muted:#9fb0cc;
       --text:#e8eefb;
       --border:rgba(255,255,255,.08);
@@ -95,7 +94,6 @@
     .msg.ok{ color: #7dffb0; }
     .msg.err{ color: #ff7d7d; }
 
-    /* table */
     .table-wrap{ overflow:auto; }
     table{
       width:100%;
@@ -137,6 +135,18 @@
       font-size: 13px;
     }
     .mono{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    .summary{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(0,0,0,.12);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .summary strong{ color: var(--text); }
   </style>
 </head>
 <body>
@@ -144,7 +154,7 @@
     <header>
       <div>
         <h1>Profits</h1>
-        <div class="sub">Browse 6000+ rows with pagination + filters, and add new records.</div>
+        <div class="sub">Pagination + Filters + Easy Insert (dropdowns + date picker) + Total Profit summary.</div>
       </div>
       <div class="pill mono" id="apiPill"></div>
     </header>
@@ -159,27 +169,27 @@
         <div class="card-b">
           <div class="row">
             <div>
-              <label for="name">Name</label>
-              <input id="name" maxlength="300" placeholder="e.g. Store A" />
+              <label for="name">Name (dropdown)</label>
+              <select id="name"></select>
             </div>
             <div>
-              <label for="month">Month</label>
-              <input id="month" maxlength="33" placeholder="e.g. 2026-02" />
+              <label for="month">Month (dropdown)</label>
+              <select id="month"></select>
             </div>
           </div>
 
           <div class="row3" style="margin-top:12px;">
             <div>
-              <label for="date_column">Date</label>
+              <label for="date_column">Date (calendar)</label>
               <input id="date_column" type="date" />
             </div>
             <div>
-              <label for="profit">Profit</label>
-              <input id="profit" type="number" step="0.01" placeholder="e.g. 1234.56" />
+              <label for="profit">Profit (number only)</label>
+              <input id="profit" type="number" step="0.01" placeholder="e.g. 1234.56" inputmode="decimal" />
             </div>
             <div>
-              <label for="coin">Coin</label>
-              <input id="coin" placeholder="e.g. USD" />
+              <label for="coin">Coin (dropdown)</label>
+              <select id="coin"></select>
             </div>
           </div>
 
@@ -201,19 +211,19 @@
         <div class="card-b">
           <div class="row">
             <div>
-              <label for="fName">Name contains</label>
-              <input id="fName" placeholder="type to search..." />
+              <label for="fName">Name</label>
+              <select id="fName"></select>
             </div>
             <div>
               <label for="fCoin">Coin</label>
-              <input id="fCoin" placeholder="e.g. USD" />
+              <select id="fCoin"></select>
             </div>
           </div>
 
           <div class="row" style="margin-top:12px;">
             <div>
               <label for="fMonth">Month</label>
-              <input id="fMonth" placeholder="e.g. 2026-02" />
+              <select id="fMonth"></select>
             </div>
             <div>
               <label>Rows per page</label>
@@ -221,18 +231,18 @@
                 <option value="25">25</option>
                 <option value="50" selected>50</option>
                 <option value="100">100</option>
-                <option value="200">200</option>
+                <option value="7000">All</option>
               </select>
             </div>
           </div>
 
           <div class="row" style="margin-top:12px;">
             <div>
-              <label for="fFrom">Date from</label>
+              <label for="fFrom">Date from (calendar)</label>
               <input id="fFrom" type="date" />
             </div>
             <div>
-              <label for="fTo">Date to</label>
+              <label for="fTo">Date to (calendar)</label>
               <input id="fTo" type="date" />
             </div>
           </div>
@@ -244,8 +254,10 @@
 
           <div class="msg" id="msgList"></div>
 
-          <div class="pill" style="margin-top:12px;">
-            Note: Pagination uses ORDS implicit parameters <span class="mono">limit</span> / <span class="mono">offset</span>. :contentReference[oaicite:3]{index=3}
+          <div class="summary" id="summaryBox">
+            <span>Matched rows: <strong id="sumCount">-</strong></span>
+            <span>Total profit: <strong id="sumProfit">-</strong></span>
+            <span class="pill mono" id="sumMode" style="padding:4px 8px;">summary: -</span>
           </div>
         </div>
       </section>
@@ -293,26 +305,110 @@
     const API_BASE_URL = "https://oracleapex.com/ords/bader913/profits_api";
     const LIST_URL = `${API_BASE_URL}/profits`;
     const CREATE_URL = `${API_BASE_URL}/profits`;
+    const TOTAL_URL = `${API_BASE_URL}/profits_total`; // (recommended) add this endpoint in ORDS
 
     const el = (id) => document.getElementById(id);
+    const safe = (v) => (v ?? "").toString();
 
     el("apiPill").textContent = API_BASE_URL;
 
-    // Pagination state
+    // ========= Dropdown data (dummy; you will replace later) =========
+    const NAME_OPTIONS = [
+      "Ahmad Shaheen", "Bader Alraslan", "Yaseen Al Adel", "Yaseen Al Hatm", "Qusai Alhamido",
+      "Nour Alraslan", "Adel Al Akhras", "Khaled Ghazoul", "Ahmad Al Nawal"
+    ];
+
+    const COIN_OPTIONS = [
+      "KAS", "FLUX", "ZEC", "ETH", "BTC",
+      "DNX", "ALPH", "ZYFER", "TAO", "POPCAT"
+    ];
+
+    // Generate month options (last 24 months) as YYYY-MM
+    // function generateMonths(n = 24){
+    //   const out = [];
+    //   const d = new Date();
+    //   d.setDate(1);
+    //   for(let i=0;i<n;i++){
+    //     const y = d.getFullYear();
+    //     const m = String(d.getMonth()+1).padStart(2,"0");
+    //     out.push(`${y}-${m}`);
+    //     d.setMonth(d.getMonth()-1);
+    //   }
+    //   return out;
+    // }
+    function formatMonthLikeDb(dateObj){
+  // Example output: "Friday, August 1, 2025"
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(dateObj);
+}
+
+function generateMonthOptionsDbFormat(){
+  // from Aug 2023 to Dec 2026 (last year 2026)
+  const start = new Date(2023, 7, 1);  // 7 = August (0-based)
+  const end   = new Date(2026, 11, 1); // 11 = December
+
+  const out = [];
+  const d = new Date(start);
+
+  while (d <= end) {
+    out.push(formatMonthLikeDb(d));
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(1); // keep day = 1
+  }
+  return out;
+}
+
+    const MONTH_OPTIONS = generateMonthOptionsDbFormat(24);
+
+    function fillSelect(selectEl, options, withAll = false, allLabel="(All)"){
+      selectEl.innerHTML = "";
+      if(withAll){
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = allLabel;
+        selectEl.appendChild(opt);
+      }
+      for(const v of options){
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    // ========= Date inputs: “calendar only” UX =========
+    function makeDateCalendarOnly(input){
+      // type="date" already opens calendar, but we reduce manual typing:
+      input.setAttribute("readonly", "readonly");
+
+      input.addEventListener("keydown", (e) => {
+        // block typing
+        e.preventDefault();
+      });
+
+      input.addEventListener("click", () => {
+        // Chrome / Edge support showPicker()
+        if (typeof input.showPicker === "function") input.showPicker();
+      });
+
+      input.addEventListener("focus", () => {
+        if (typeof input.showPicker === "function") input.showPicker();
+      });
+    }
+
+    // ========= Pagination state =========
     let offset = 0;
     let limit = Number(el("pageSize").value);
 
-    // Filter state
-    let filters = {
-      name: "",
-      coin: "",
-      month: "",
-      from: "",
-      to: ""
-    };
+    // ========= Filter state =========
+    let filters = { name:"", coin:"", month:"", from:"", to:"" };
 
     // Debounce helper
-    function debounce(fn, ms=350){
+    function debounce(fn, ms=450){
       let t;
       return (...args) => {
         clearTimeout(t);
@@ -326,27 +422,30 @@
       node.textContent = text || "";
     }
 
-    function safe(v){ return (v ?? "").toString(); }
+    function buildQueryParams(includePaging=true){
+      const params = new URLSearchParams();
 
-   function buildUrl(){
-  const params = new URLSearchParams();
+      if(includePaging){
+        params.set("limit", String(limit));
+        params.set("offset", String(offset));
+      }
 
-  // ORDS pagination
-  params.set("limit", String(limit));
-  params.set("offset", String(offset));
+      // ALWAYS send filter params (even if empty)
+      params.set("p_name",  filters.name  ?? "");
+      params.set("p_coin",  filters.coin  ?? "");
+      params.set("p_month", filters.month ?? "");
+      params.set("p_from",  filters.from  ?? "");
+      params.set("p_to",    filters.to    ?? "");
 
-  // ALWAYS send filter params (even if "")
-  params.set("p_name",  filters.name  ?? "");
-  params.set("p_coin",  filters.coin  ?? "");
-  params.set("p_month", filters.month ?? "");
-  params.set("p_from",  filters.from  ?? "");
-  params.set("p_to",    filters.to    ?? "");
+      return params;
+    }
 
-  const full = `${LIST_URL}?${params.toString()}`;
-  el("queryInfo").textContent = full;
-  return full;
-}
-
+    function buildUrl(){
+      const params = buildQueryParams(true);
+      const full = `${LIST_URL}?${params.toString()}`;
+      el("queryInfo").textContent = full;
+      return full;
+    }
 
     async function loadRows(){
       setMsg("msgList", "Loading...", "");
@@ -361,7 +460,6 @@
 
         const data = await r.json();
 
-        // ORDS often returns: {items, hasMore, count, limit, offset, links...} :contentReference[oaicite:5]{index=5}
         const items = Array.isArray(data) ? data : (data.items || []);
         const hasMore = !!(data.hasMore ?? (items.length === limit));
         const returnedLimit = Number(data.limit ?? limit);
@@ -395,29 +493,68 @@
           setMsg("msgList", `Loaded ${items.length} row(s).`, "ok");
         }
 
-        // Pager buttons
         el("btnPrev").disabled = (offset <= 0);
         el("btnNext").disabled = !hasMore;
 
-        // Info labels
         const page = Math.floor(returnedOffset / returnedLimit) + 1;
         el("pageInfo").textContent = `Page ${page}`;
         el("metaInfo").textContent = `offset=${returnedOffset} limit=${returnedLimit} count=${count} hasMore=${hasMore}`;
+
+        // Update totals after list loads
+        await loadTotals(items);
 
       }catch(e){
         console.error(e);
         el("rows").innerHTML = `<tr><td colspan="6" style="color:#ff7d7d;">${safe(e.message)}</td></tr>`;
         setMsg("msgList", e.message, "err");
+        setTotals("-", "-", "summary: error");
+      }
+    }
+
+    function setTotals(totalRows, totalProfit, mode){
+      el("sumCount").textContent = safe(totalRows);
+      el("sumProfit").textContent = safe(totalProfit);
+      el("sumMode").textContent = mode;
+    }
+
+    // Try server-side totals first (profits_total). If not available, fallback to current page sum.
+    async function loadTotals(currentPageItems){
+      // Fallback sum (current page)
+      const pageSum = currentPageItems.reduce((acc, x) => {
+        const v = Number(x.PROFIT ?? x.profit ?? 0);
+        return acc + (Number.isFinite(v) ? v : 0);
+      }, 0);
+
+      try{
+        const params = buildQueryParams(false);
+        const url = `${TOTAL_URL}?${params.toString()}`;
+        const r = await fetch(url, { method: "GET" });
+
+        if(!r.ok) throw new Error("no-summary-endpoint");
+
+        const data = await r.json();
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const row = items[0] || {};
+
+        const totalProfit = row.TOTAL_PROFIT ?? row.total_profit ?? row.TOTAL ?? row.total ?? null;
+        const totalRows = row.TOTAL_ROWS ?? row.total_rows ?? row.COUNT ?? row.count ?? null;
+
+        if(totalProfit === null || totalRows === null) throw new Error("bad-summary-shape");
+
+        setTotals(totalRows, totalProfit, "summary: server");
+      } catch {
+        // server endpoint not available yet
+        setTotals(`(page) ${currentPageItems.length}`, pageSum.toFixed(2), "summary: page");
       }
     }
 
     async function addRow(){
       const payload = {
-        name: el("name").value.trim() || null,
-        month: el("month").value.trim() || null,
+        name: el("name").value || null,
+        month: el("month").value || null,
         date_column: el("date_column").value || null, // YYYY-MM-DD
         profit: el("profit").value ? Number(el("profit").value) : null,
-        coin: el("coin").value.trim() || null
+        coin: el("coin").value || null
       };
 
       if(!payload.name)  return setMsg("msgForm", "Name is required.", "err");
@@ -436,7 +573,6 @@
 
         setMsg("msgForm", "Created ✅", "ok");
 
-        // Refresh first page after insert
         offset = 0;
         await loadRows();
       }catch(e){
@@ -446,15 +582,19 @@
     }
 
     function resetForm(){
-      ["name","month","date_column","profit","coin"].forEach(id => el(id).value = "");
+      el("name").selectedIndex = 0;
+      el("month").selectedIndex = 0;
+      el("coin").selectedIndex = 0;
+      el("date_column").value = "";
+      el("profit").value = "";
       setMsg("msgForm", "", "");
     }
 
     function applyFilters(){
       filters = {
-        name: el("fName").value.trim(),
-        coin: el("fCoin").value.trim(),
-        month: el("fMonth").value.trim(),
+        name: el("fName").value,
+        coin: el("fCoin").value,
+        month: el("fMonth").value,
         from: el("fFrom").value,
         to: el("fTo").value
       };
@@ -464,12 +604,32 @@
     }
 
     function clearFilters(){
-      ["fName","fCoin","fMonth","fFrom","fTo"].forEach(id => el(id).value = "");
+      el("fName").value = "";
+      el("fCoin").value = "";
+      el("fMonth").value = "";
+      el("fFrom").value = "";
+      el("fTo").value = "";
       limit = Number(el("pageSize").value);
       offset = 0;
       filters = { name:"", coin:"", month:"", from:"", to:"" };
       loadRows();
     }
+
+    // ======== Init UI (fill dropdowns + date pickers) ========
+    // Add form selects
+    fillSelect(el("name"), NAME_OPTIONS, false);
+    fillSelect(el("coin"), COIN_OPTIONS, false);
+    fillSelect(el("month"), MONTH_OPTIONS, false);
+
+    // Filter selects (with All)
+    fillSelect(el("fName"), NAME_OPTIONS, true, "(All Names)");
+    fillSelect(el("fCoin"), COIN_OPTIONS, true, "(All Coins)");
+    fillSelect(el("fMonth"), MONTH_OPTIONS, true, "(All Months)");
+
+    // Date inputs calendar UX
+    makeDateCalendarOnly(el("date_column"));
+    makeDateCalendarOnly(el("fFrom"));
+    makeDateCalendarOnly(el("fTo"));
 
     // Wire up UI
     el("btnAdd").addEventListener("click", addRow);
@@ -482,10 +642,9 @@
     el("btnPrev").addEventListener("click", () => { offset = Math.max(0, offset - limit); loadRows(); });
     el("btnNext").addEventListener("click", () => { offset = offset + limit; loadRows(); });
 
-    // Nice UX: auto-apply while typing (debounced)
-    const autoApply = debounce(() => applyFilters(), 450);
+    // Optional: auto-apply changes (still smooth)
+    const autoApply = debounce(() => applyFilters(), 550);
     ["fName","fCoin","fMonth","fFrom","fTo"].forEach(id => {
-      el(id).addEventListener("input", autoApply);
       el(id).addEventListener("change", autoApply);
     });
     el("pageSize").addEventListener("change", () => applyFilters());
