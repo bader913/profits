@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profits Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#0f1624;
+      --muted:#9fb0cc;
+      --text:#e8eefb;
+      --border:rgba(255,255,255,.08);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(78, 137, 255, .25), transparent 55%),
+                  radial-gradient(900px 700px at 90% 0%, rgba(35, 210, 255, .18), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+    }
+    .wrap{ max-width: 1200px; margin: 0 auto; padding: 22px; }
+    header{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+      margin-bottom:16px;
+    }
+    h1{ margin:0; font-size: 22px; letter-spacing:.2px; }
+    .sub{ color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .pill{
+      font-size:12px; color: var(--muted);
+      border:1px solid var(--border);
+      padding:8px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      white-space: nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-h{
+      padding: 14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.15);
+    }
+    .card-h strong{ font-size: 13px; letter-spacing:.2px; }
+    .card-b{ padding: 16px; }
+
+    label{ display:block; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+    input, select{
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      outline: none;
+    }
+    input::placeholder{ color: rgba(232,238,251,.45); }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .actions{ display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+    button{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button.primary{
+      background: linear-gradient(180deg, rgba(78,137,255,.95), rgba(78,137,255,.70));
+      border-color: rgba(78,137,255,.45);
+    }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .msg{ margin-top: 10px; font-size: 13px; color: var(--muted); }
+    .msg.ok{ color: #7dffb0; }
+    .msg.err{ color: #ff7d7d; }
+
+    /* table */
+    .table-wrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 900px;
+    }
+    thead th{
+      position: sticky;
+      top: 0;
+      background: rgba(10, 14, 22, .95);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+      text-align:left;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 12px 12px;
+      white-space: nowrap;
+    }
+    tbody td{
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    tbody tr:hover{ background: rgba(255,255,255,.03); }
+
+    .toolbar{
+      display:flex; gap: 10px; flex-wrap: wrap; align-items:center; justify-content:space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,.10);
+    }
+    .pager{
+      display:flex; gap: 8px; align-items:center; flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .mono{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Profits</h1>
+        <div class="sub">Browse 6000+ rows with pagination + filters, and add new records.</div>
+      </div>
+      <div class="pill mono" id="apiPill"></div>
+    </header>
+
+    <div class="grid">
+      <!-- Add form -->
+      <section class="card">
+        <div class="card-h">
+          <strong>Add new row</strong>
+          <span class="pill">POST /profits</span>
+        </div>
+        <div class="card-b">
+          <div class="row">
+            <div>
+              <label for="name">Name</label>
+              <input id="name" maxlength="300" placeholder="e.g. Store A" />
+            </div>
+            <div>
+              <label for="month">Month</label>
+              <input id="month" maxlength="33" placeholder="e.g. 2026-02" />
+            </div>
+          </div>
+
+          <div class="row3" style="margin-top:12px;">
+            <div>
+              <label for="date_column">Date</label>
+              <input id="date_column" type="date" />
+            </div>
+            <div>
+              <label for="profit">Profit</label>
+              <input id="profit" type="number" step="0.01" placeholder="e.g. 1234.56" />
+            </div>
+            <div>
+              <label for="coin">Coin</label>
+              <input id="coin" placeholder="e.g. USD" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" id="btnAdd">Add</button>
+            <button id="btnReset">Reset</button>
+          </div>
+
+          <div class="msg" id="msgForm"></div>
+        </div>
+      </section>
+
+      <!-- Filters -->
+      <section class="card">
+        <div class="card-h">
+          <strong>Filters</strong>
+          <span class="pill">GET /profits?limit&offset</span>
+        </div>
+        <div class="card-b">
+          <div class="row">
+            <div>
+              <label for="fName">Name contains</label>
+              <input id="fName" placeholder="type to search..." />
+            </div>
+            <div>
+              <label for="fCoin">Coin</label>
+              <input id="fCoin" placeholder="e.g. USD" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <div>
+              <label for="fMonth">Month</label>
+              <input id="fMonth" placeholder="e.g. 2026-02" />
+            </div>
+            <div>
+              <label>Rows per page</label>
+              <select id="pageSize">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <div>
+              <label for="fFrom">Date from</label>
+              <input id="fFrom" type="date" />
+            </div>
+            <div>
+              <label for="fTo">Date to</label>
+              <input id="fTo" type="date" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" id="btnApply">Apply</button>
+            <button id="btnClear">Clear</button>
+          </div>
+
+          <div class="msg" id="msgList"></div>
+
+          <div class="pill" style="margin-top:12px;">
+            Note: Pagination uses ORDS implicit parameters <span class="mono">limit</span> / <span class="mono">offset</span>. :contentReference[oaicite:3]{index=3}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Table -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-h">
+        <strong>Rows</strong>
+        <div class="actions" style="margin:0;">
+          <button id="btnRefresh">Refresh</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Month</th>
+              <th>Date</th>
+              <th>Profit</th>
+              <th>Coin</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="toolbar">
+        <div class="pager">
+          <button id="btnPrev">◀ Prev</button>
+          <button id="btnNext">Next ▶</button>
+          <span class="mono" id="pageInfo"></span>
+          <span class="mono" id="metaInfo"></span>
+        </div>
+        <div class="pill mono" id="queryInfo"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ✅ Your exact info
+    const API_BASE_URL = "https://oracleapex.com/ords/bader913/profits_api";
+    const LIST_URL = `${API_BASE_URL}/profits`;
+    const CREATE_URL = `${API_BASE_URL}/profits`;
+
+    const el = (id) => document.getElementById(id);
+
+    el("apiPill").textContent = API_BASE_URL;
+
+    // Pagination state
+    let offset = 0;
+    let limit = Number(el("pageSize").value);
+
+    // Filter state
+    let filters = {
+      name: "",
+      coin: "",
+      month: "",
+      from: "",
+      to: ""
+    };
+
+    // Debounce helper
+    function debounce(fn, ms=350){
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), ms);
+      };
+    }
+
+    function setMsg(targetId, text, kind=""){
+      const node = el(targetId);
+      node.className = `msg ${kind}`.trim();
+      node.textContent = text || "";
+    }
+
+    function safe(v){ return (v ?? "").toString(); }
+
+   function buildUrl(){
+  const params = new URLSearchParams();
+
+  // ORDS pagination
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+
+  // ALWAYS send filter params (even if "")
+  params.set("p_name",  filters.name  ?? "");
+  params.set("p_coin",  filters.coin  ?? "");
+  params.set("p_month", filters.month ?? "");
+  params.set("p_from",  filters.from  ?? "");
+  params.set("p_to",    filters.to    ?? "");
+
+  const full = `${LIST_URL}?${params.toString()}`;
+  el("queryInfo").textContent = full;
+  return full;
+}
+
+
+    async function loadRows(){
+      setMsg("msgList", "Loading...", "");
+      el("rows").innerHTML = `<tr><td colspan="6" class="mono" style="color:#9fb0cc;">Loading…</td></tr>`;
+      el("btnPrev").disabled = true;
+      el("btnNext").disabled = true;
+
+      try{
+        const url = buildUrl();
+        const r = await fetch(url, { method: "GET" });
+        if(!r.ok) throw new Error(`GET failed: ${r.status}`);
+
+        const data = await r.json();
+
+        // ORDS often returns: {items, hasMore, count, limit, offset, links...} :contentReference[oaicite:5]{index=5}
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const hasMore = !!(data.hasMore ?? (items.length === limit));
+        const returnedLimit = Number(data.limit ?? limit);
+        const returnedOffset = Number(data.offset ?? offset);
+        const count = Number(data.count ?? items.length);
+
+        if(!items.length){
+          el("rows").innerHTML = `<tr><td colspan="6" style="color:#9fb0cc;">No rows found.</td></tr>`;
+          setMsg("msgList", "No rows found (try clearing filters).", "");
+        }else{
+          el("rows").innerHTML = items.map(x => {
+            const id = x.ID ?? x.id ?? "";
+            const name = x.NAME ?? x.name ?? "";
+            const month = x.MONTH ?? x.month ?? "";
+            const dateVal = (x.DATE_COLUMN ?? x.date_column ?? "");
+            const dateTxt = safe(dateVal).slice(0, 10);
+            const profit = x.PROFIT ?? x.profit ?? "";
+            const coin = x.COIN ?? x.coin ?? "";
+            return `
+              <tr>
+                <td class="mono">${safe(id)}</td>
+                <td>${safe(name)}</td>
+                <td class="mono">${safe(month)}</td>
+                <td class="mono">${safe(dateTxt)}</td>
+                <td class="mono">${safe(profit)}</td>
+                <td class="mono">${safe(coin)}</td>
+              </tr>
+            `;
+          }).join("");
+
+          setMsg("msgList", `Loaded ${items.length} row(s).`, "ok");
+        }
+
+        // Pager buttons
+        el("btnPrev").disabled = (offset <= 0);
+        el("btnNext").disabled = !hasMore;
+
+        // Info labels
+        const page = Math.floor(returnedOffset / returnedLimit) + 1;
+        el("pageInfo").textContent = `Page ${page}`;
+        el("metaInfo").textContent = `offset=${returnedOffset} limit=${returnedLimit} count=${count} hasMore=${hasMore}`;
+
+      }catch(e){
+        console.error(e);
+        el("rows").innerHTML = `<tr><td colspan="6" style="color:#ff7d7d;">${safe(e.message)}</td></tr>`;
+        setMsg("msgList", e.message, "err");
+      }
+    }
+
+    async function addRow(){
+      const payload = {
+        name: el("name").value.trim() || null,
+        month: el("month").value.trim() || null,
+        date_column: el("date_column").value || null, // YYYY-MM-DD
+        profit: el("profit").value ? Number(el("profit").value) : null,
+        coin: el("coin").value.trim() || null
+      };
+
+      if(!payload.name)  return setMsg("msgForm", "Name is required.", "err");
+      if(!payload.month) return setMsg("msgForm", "Month is required.", "err");
+      if(!payload.coin)  return setMsg("msgForm", "Coin is required.", "err");
+
+      setMsg("msgForm", "Creating...", "");
+
+      try{
+        const r = await fetch(CREATE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if(!r.ok) throw new Error(`POST failed: ${r.status}`);
+
+        setMsg("msgForm", "Created ✅", "ok");
+
+        // Refresh first page after insert
+        offset = 0;
+        await loadRows();
+      }catch(e){
+        console.error(e);
+        setMsg("msgForm", e.message, "err");
+      }
+    }
+
+    function resetForm(){
+      ["name","month","date_column","profit","coin"].forEach(id => el(id).value = "");
+      setMsg("msgForm", "", "");
+    }
+
+    function applyFilters(){
+      filters = {
+        name: el("fName").value.trim(),
+        coin: el("fCoin").value.trim(),
+        month: el("fMonth").value.trim(),
+        from: el("fFrom").value,
+        to: el("fTo").value
+      };
+      limit = Number(el("pageSize").value);
+      offset = 0;
+      loadRows();
+    }
+
+    function clearFilters(){
+      ["fName","fCoin","fMonth","fFrom","fTo"].forEach(id => el(id).value = "");
+      limit = Number(el("pageSize").value);
+      offset = 0;
+      filters = { name:"", coin:"", month:"", from:"", to:"" };
+      loadRows();
+    }
+
+    // Wire up UI
+    el("btnAdd").addEventListener("click", addRow);
+    el("btnReset").addEventListener("click", resetForm);
+
+    el("btnApply").addEventListener("click", applyFilters);
+    el("btnClear").addEventListener("click", clearFilters);
+    el("btnRefresh").addEventListener("click", () => loadRows());
+
+    el("btnPrev").addEventListener("click", () => { offset = Math.max(0, offset - limit); loadRows(); });
+    el("btnNext").addEventListener("click", () => { offset = offset + limit; loadRows(); });
+
+    // Nice UX: auto-apply while typing (debounced)
+    const autoApply = debounce(() => applyFilters(), 450);
+    ["fName","fCoin","fMonth","fFrom","fTo"].forEach(id => {
+      el(id).addEventListener("input", autoApply);
+      el(id).addEventListener("change", autoApply);
+    });
+    el("pageSize").addEventListener("change", () => applyFilters());
+
+    // Initial load
+    loadRows();
+  </script>
+</body>
+</html>
