@@ -1,200 +1,113 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Profits Dashboard</title>
   <style>
-    :root {
-      --bg: #0b0f17;
-      --muted: #9fb0cc;
-      --text: #e8eefb;
-      --border: rgba(255, 255, 255, .08);
-      --shadow: 0 12px 30px rgba(0, 0, 0, .35);
+    :root{
+      --bg:#0b0f17;
+      --muted:#9fb0cc;
+      --text:#e8eefb;
+      --border:rgba(255,255,255,.08);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
       --radius: 16px;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: radial-gradient(1200px 800px at 20% -10%, rgba(78, 137, 255, .25), transparent 55%),
-        radial-gradient(900px 700px at 90% 0%, rgba(35, 210, 255, .18), transparent 55%),
-        var(--bg);
+                  radial-gradient(900px 700px at 90% 0%, rgba(35, 210, 255, .18), transparent 55%),
+                  var(--bg);
       color: var(--text);
     }
-
-    .wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 22px;
+    .wrap{ max-width: 1200px; margin: 0 auto; padding: 22px; }
+    header{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+      margin-bottom:16px;
     }
-
-    header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      letter-spacing: .2px;
-    }
-
-    .sub {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 6px;
-    }
-
-    .pill {
-      font-size: 12px;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .03);
+    h1{ margin:0; font-size: 22px; letter-spacing:.2px; }
+    .sub{ color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .pill{
+      font-size:12px; color: var(--muted);
+      border:1px solid var(--border);
+      padding:8px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.03);
       white-space: nowrap;
     }
-
-    .grid {
-      display: grid;
+    .grid{
+      display:grid;
       grid-template-columns: 1.1fr .9fr;
       gap: 16px;
     }
-
-    @media (max-width: 980px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
     }
-
-    .card {
-      background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      overflow: hidden;
+      overflow:hidden;
     }
-
-    .card-h {
+    .card-h{
       padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
       border-bottom: 1px solid var(--border);
-      background: rgba(0, 0, 0, .15);
+      background: rgba(0,0,0,.15);
     }
+    .card-h strong{ font-size: 13px; letter-spacing:.2px; }
+    .card-b{ padding: 16px; }
 
-    .card-h strong {
-      font-size: 13px;
-      letter-spacing: .2px;
-    }
-
-    .card-b {
-      padding: 16px;
-    }
-
-    label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0 0 6px;
-    }
-
-    input,
-    select {
-      width: 100%;
+    label{ display:block; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+    input, select{
+      width:100%;
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      background: rgba(0, 0, 0, .20);
+      background: rgba(0,0,0,.20);
       color: var(--text);
       outline: none;
     }
+    input::placeholder{ color: rgba(232,238,251,.45); }
 
-    input::placeholder {
-      color: rgba(232, 238, 251, .45);
-    }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .actions{ display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .row3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    button {
+    button{
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      background: rgba(255, 255, 255, .06);
+      background: rgba(255,255,255,.06);
       color: var(--text);
       cursor: pointer;
     }
-
-    button.primary {
-      background: linear-gradient(180deg, rgba(78, 137, 255, .95), rgba(78, 137, 255, .70));
-      border-color: rgba(78, 137, 255, .45);
+    button.primary{
+      background: linear-gradient(180deg, rgba(78,137,255,.95), rgba(78,137,255,.70));
+      border-color: rgba(78,137,255,.45);
     }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
 
-    button:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
+    .msg{ margin-top: 10px; font-size: 13px; color: var(--muted); }
+    .msg.ok{ color: #7dffb0; }
+    .msg.err{ color: #ff7d7d; }
 
-    .msg {
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .msg.ok {
-      color: #7dffb0;
-    }
-
-    .msg.err {
-      color: #ff7d7d;
-    }
-
-    .table-wrap {
-      overflow: auto;
-    }
-
-    table {
-      width: 100%;
+    .table-wrap{ overflow:auto; }
+    table{
+      width:100%;
       border-collapse: separate;
       border-spacing: 0;
       min-width: 900px;
     }
-
-    thead th {
+    thead th{
       position: sticky;
       top: 0;
       background: rgba(10, 14, 22, .95);
       backdrop-filter: blur(6px);
       border-bottom: 1px solid var(--border);
-      text-align: left;
+      text-align:left;
       font-size: 12px;
       color: var(--muted);
       letter-spacing: .08em;
@@ -202,63 +115,40 @@
       padding: 12px 12px;
       white-space: nowrap;
     }
-
-    tbody td {
+    tbody td{
       padding: 12px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, .05);
+      border-bottom: 1px solid rgba(255,255,255,.05);
       font-size: 13px;
       white-space: nowrap;
     }
+    tbody tr:hover{ background: rgba(255,255,255,.03); }
 
-    tbody tr:hover {
-      background: rgba(255, 255, 255, .03);
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
+    .toolbar{
+      display:flex; gap: 10px; flex-wrap: wrap; align-items:center; justify-content:space-between;
       padding: 12px 16px;
       border-top: 1px solid var(--border);
-      background: rgba(0, 0, 0, .10);
+      background: rgba(0,0,0,.10);
     }
-
-    .pager {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
+    .pager{
+      display:flex; gap: 8px; align-items:center; flex-wrap: wrap;
       color: var(--muted);
       font-size: 13px;
     }
+    .mono{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
-    .mono {
-      font-variant-numeric: tabular-nums;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-
-    .summary {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
+    .summary{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
       margin-top: 10px;
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 14px;
-      background: rgba(0, 0, 0, .12);
+      background: rgba(0,0,0,.12);
       color: var(--muted);
       font-size: 13px;
     }
-
-    .summary strong {
-      color: var(--text);
-    }
+    .summary strong{ color: var(--text); }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <header>
@@ -341,7 +231,7 @@
                 <option value="25">25</option>
                 <option value="50" selected>50</option>
                 <option value="100">100</option>
-                <option value="7001">All</option>
+                <option value="7000">All</option>
               </select>
             </div>
           </div>
@@ -446,43 +336,43 @@
     //   }
     //   return out;
     // }
-    function formatMonthLikeDb(dateObj) {
-      // Example output: "Friday, August 1, 2025"
-      return new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric"
-      }).format(dateObj);
-    }
+    function formatMonthLikeDb(dateObj){
+  // Example output: "Friday, August 1, 2025"
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(dateObj);
+}
 
-    function generateMonthOptionsDbFormat() {
-      // from Aug 2023 to Dec 2026 (last year 2026)
-      const start = new Date(2023, 7, 1);  // 7 = August (0-based)
-      const end = new Date(2026, 11, 1); // 11 = December
+function generateMonthOptionsDbFormat(){
+  // from Aug 2023 to Dec 2026 (last year 2026)
+  const start = new Date(2023, 7, 1);  // 7 = August (0-based)
+  const end   = new Date(2026, 11, 1); // 11 = December
 
-      const out = [];
-      const d = new Date(start);
+  const out = [];
+  const d = new Date(start);
 
-      while (d <= end) {
-        out.push(formatMonthLikeDb(d));
-        d.setMonth(d.getMonth() + 1);
-        d.setDate(1); // keep day = 1
-      }
-      return out;
-    }
+  while (d <= end) {
+    out.push(formatMonthLikeDb(d));
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(1); // keep day = 1
+  }
+  return out;
+}
 
     const MONTH_OPTIONS = generateMonthOptionsDbFormat(24);
 
-    function fillSelect(selectEl, options, withAll = false, allLabel = "(All)") {
+    function fillSelect(selectEl, options, withAll = false, allLabel="(All)"){
       selectEl.innerHTML = "";
-      if (withAll) {
+      if(withAll){
         const opt = document.createElement("option");
         opt.value = "";
         opt.textContent = allLabel;
         selectEl.appendChild(opt);
       }
-      for (const v of options) {
+      for(const v of options){
         const opt = document.createElement("option");
         opt.value = v;
         opt.textContent = v;
@@ -491,7 +381,7 @@
     }
 
     // ========= Date inputs: “calendar only” UX =========
-    function makeDateCalendarOnly(input) {
+    function makeDateCalendarOnly(input){
       // type="date" already opens calendar, but we reduce manual typing:
       input.setAttribute("readonly", "readonly");
 
@@ -515,10 +405,10 @@
     let limit = Number(el("pageSize").value);
 
     // ========= Filter state =========
-    let filters = { name: "", coin: "", month: "", from: "", to: "" };
+    let filters = { name:"", coin:"", month:"", from:"", to:"" };
 
     // Debounce helper
-    function debounce(fn, ms = 450) {
+    function debounce(fn, ms=450){
       let t;
       return (...args) => {
         clearTimeout(t);
@@ -526,47 +416,47 @@
       };
     }
 
-    function setMsg(targetId, text, kind = "") {
+    function setMsg(targetId, text, kind=""){
       const node = el(targetId);
       node.className = `msg ${kind}`.trim();
       node.textContent = text || "";
     }
 
-    function buildQueryParams(includePaging = true) {
+    function buildQueryParams(includePaging=true){
       const params = new URLSearchParams();
 
-      if (includePaging) {
+      if(includePaging){
         params.set("limit", String(limit));
         params.set("offset", String(offset));
       }
 
       // ALWAYS send filter params (even if empty)
-      params.set("p_name", filters.name ?? "");
-      params.set("p_coin", filters.coin ?? "");
+      params.set("p_name",  filters.name  ?? "");
+      params.set("p_coin",  filters.coin  ?? "");
       params.set("p_month", filters.month ?? "");
-      params.set("p_from", filters.from ?? "");
-      params.set("p_to", filters.to ?? "");
+      params.set("p_from",  filters.from  ?? "");
+      params.set("p_to",    filters.to    ?? "");
 
       return params;
     }
 
-    function buildUrl() {
+    function buildUrl(){
       const params = buildQueryParams(true);
       const full = `${LIST_URL}?${params.toString()}`;
       el("queryInfo").textContent = full;
       return full;
     }
 
-    async function loadRows() {
+    async function loadRows(){
       setMsg("msgList", "Loading...", "");
       el("rows").innerHTML = `<tr><td colspan="6" class="mono" style="color:#9fb0cc;">Loading…</td></tr>`;
       el("btnPrev").disabled = true;
       el("btnNext").disabled = true;
 
-      try {
+      try{
         const url = buildUrl();
         const r = await fetch(url, { method: "GET" });
-        if (!r.ok) throw new Error(`GET failed: ${r.status}`);
+        if(!r.ok) throw new Error(`GET failed: ${r.status}`);
 
         const data = await r.json();
 
@@ -576,10 +466,10 @@
         const returnedOffset = Number(data.offset ?? offset);
         const count = Number(data.count ?? items.length);
 
-        if (!items.length) {
+        if(!items.length){
           el("rows").innerHTML = `<tr><td colspan="6" style="color:#9fb0cc;">No rows found.</td></tr>`;
           setMsg("msgList", "No rows found (try clearing filters).", "");
-        } else {
+        }else{
           el("rows").innerHTML = items.map(x => {
             const id = x.ID ?? x.id ?? "";
             const name = x.NAME ?? x.name ?? "";
@@ -613,7 +503,7 @@
         // Update totals after list loads
         await loadTotals(items);
 
-      } catch (e) {
+      }catch(e){
         console.error(e);
         el("rows").innerHTML = `<tr><td colspan="6" style="color:#ff7d7d;">${safe(e.message)}</td></tr>`;
         setMsg("msgList", e.message, "err");
@@ -621,26 +511,26 @@
       }
     }
 
-    function setTotals(totalRows, totalProfit, mode) {
+    function setTotals(totalRows, totalProfit, mode){
       el("sumCount").textContent = safe(totalRows);
       el("sumProfit").textContent = safe(totalProfit);
       el("sumMode").textContent = mode;
     }
 
     // Try server-side totals first (profits_total). If not available, fallback to current page sum.
-    async function loadTotals(currentPageItems) {
+    async function loadTotals(currentPageItems){
       // Fallback sum (current page)
       const pageSum = currentPageItems.reduce((acc, x) => {
         const v = Number(x.PROFIT ?? x.profit ?? 0);
         return acc + (Number.isFinite(v) ? v : 0);
       }, 0);
 
-      try {
+      try{
         const params = buildQueryParams(false);
         const url = `${TOTAL_URL}?${params.toString()}`;
         const r = await fetch(url, { method: "GET" });
 
-        if (!r.ok) throw new Error("no-summary-endpoint");
+        if(!r.ok) throw new Error("no-summary-endpoint");
 
         const data = await r.json();
         const items = Array.isArray(data) ? data : (data.items || []);
@@ -649,7 +539,7 @@
         const totalProfit = row.TOTAL_PROFIT ?? row.total_profit ?? row.TOTAL ?? row.total ?? null;
         const totalRows = row.TOTAL_ROWS ?? row.total_rows ?? row.COUNT ?? row.count ?? null;
 
-        if (totalProfit === null || totalRows === null) throw new Error("bad-summary-shape");
+        if(totalProfit === null || totalRows === null) throw new Error("bad-summary-shape");
 
         setTotals(totalRows, totalProfit, "summary: server");
       } catch {
@@ -658,7 +548,7 @@
       }
     }
 
-    async function addRow() {
+    async function addRow(){
       const payload = {
         name: el("name").value || null,
         month: el("month").value || null,
@@ -667,31 +557,31 @@
         coin: el("coin").value || null
       };
 
-      if (!payload.name) return setMsg("msgForm", "Name is required.", "err");
-      if (!payload.month) return setMsg("msgForm", "Month is required.", "err");
-      if (!payload.coin) return setMsg("msgForm", "Coin is required.", "err");
+      if(!payload.name)  return setMsg("msgForm", "Name is required.", "err");
+      if(!payload.month) return setMsg("msgForm", "Month is required.", "err");
+      if(!payload.coin)  return setMsg("msgForm", "Coin is required.", "err");
 
       setMsg("msgForm", "Creating...", "");
 
-      try {
+      try{
         const r = await fetch(CREATE_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if (!r.ok) throw new Error(`POST failed: ${r.status}`);
+        if(!r.ok) throw new Error(`POST failed: ${r.status}`);
 
         setMsg("msgForm", "Created ✅", "ok");
 
         offset = 0;
         await loadRows();
-      } catch (e) {
+      }catch(e){
         console.error(e);
         setMsg("msgForm", e.message, "err");
       }
     }
 
-    function resetForm() {
+    function resetForm(){
       el("name").selectedIndex = 0;
       el("month").selectedIndex = 0;
       el("coin").selectedIndex = 0;
@@ -700,7 +590,7 @@
       setMsg("msgForm", "", "");
     }
 
-    function applyFilters() {
+    function applyFilters(){
       filters = {
         name: el("fName").value,
         coin: el("fCoin").value,
@@ -713,7 +603,7 @@
       loadRows();
     }
 
-    function clearFilters() {
+    function clearFilters(){
       el("fName").value = "";
       el("fCoin").value = "";
       el("fMonth").value = "";
@@ -721,7 +611,7 @@
       el("fTo").value = "";
       limit = Number(el("pageSize").value);
       offset = 0;
-      filters = { name: "", coin: "", month: "", from: "", to: "" };
+      filters = { name:"", coin:"", month:"", from:"", to:"" };
       loadRows();
     }
 
@@ -754,7 +644,7 @@
 
     // Optional: auto-apply changes (still smooth)
     const autoApply = debounce(() => applyFilters(), 550);
-    ["fName", "fCoin", "fMonth", "fFrom", "fTo"].forEach(id => {
+    ["fName","fCoin","fMonth","fFrom","fTo"].forEach(id => {
       el(id).addEventListener("change", autoApply);
     });
     el("pageSize").addEventListener("change", () => applyFilters());
@@ -763,5 +653,4 @@
     loadRows();
   </script>
 </body>
-
 </html>
